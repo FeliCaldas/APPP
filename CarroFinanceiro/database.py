@@ -108,6 +108,8 @@ def delete_vehicle(vehicle_id):
 def add_maintenance(maintenance_data):
     conn = get_db()
     c = conn.cursor()
+    
+    # Adiciona a manutenção
     c.execute('''
         INSERT INTO maintenance (vehicle_id, date, description, cost, mileage, next_maintenance_date)
         VALUES (?, ?, ?, ?, ?, ?)
@@ -119,6 +121,17 @@ def add_maintenance(maintenance_data):
         maintenance_data['mileage'],
         maintenance_data['next_maintenance_date']
     ))
+    
+    # Atualiza os custos adicionais do veículo
+    c.execute('''
+        UPDATE vehicles
+        SET additional_costs = additional_costs + ?
+        WHERE id = ?
+    ''', (
+        maintenance_data['cost'],
+        maintenance_data['vehicle_id']
+    ))
+    
     conn.commit()
     conn.close()
 
