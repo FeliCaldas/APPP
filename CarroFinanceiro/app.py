@@ -49,7 +49,7 @@ def main():
     """, unsafe_allow_html=True)
     st._config.set_option('server.address', '0.0.0.0')
 
-    # CSS para melhorar a interface mobile
+    # CSS para melhorar a interface mobile e tornar imagens responsivas
     st.markdown("""
         <style>
         .stButton>button {
@@ -81,6 +81,29 @@ def main():
             padding: 1rem;
             border-radius: 0.5rem;
             margin: 0.5rem 0;
+        }
+        /* Estilos para imagens responsivas */
+        .responsive-img {
+            max-width: 100%;
+            height: auto;
+            margin: 0 auto;
+            display: block;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .img-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 10px;
+        }
+        /* Media queries para diferentes tamanhos de tela */
+        @media (max-width: 768px) {
+            .img-container {
+                max-width: 100%;
+                padding: 5px;
+            }
         }
         </style>
     """, unsafe_allow_html=True)
@@ -413,8 +436,21 @@ def view_vehicles():
                     st.rerun()
             else:
                 if vehicle['image_data']:
-                    image_bytes = base64.b64decode(vehicle['image_data'])
-                    st.image(image_bytes, use_column_width=True)
+                    try:
+                        image_bytes = base64.b64decode(vehicle['image_data'])
+                        # Criar um container para a imagem
+                        with st.container():
+                            st.markdown('<div class="img-container">', unsafe_allow_html=True)
+                            st.image(
+                                image_bytes,
+                                use_column_width=True,
+                                output_format="PNG",
+                                caption=f"{vehicle['brand']} {vehicle['model']}",
+                                clamp=True  # Isso ajuda a manter a proporção da imagem
+                            )
+                            st.markdown('</div>', unsafe_allow_html=True)
+                    except Exception as e:
+                        st.error(f"Erro ao carregar imagem: {str(e)}")
 
                 total_cost = vehicle['purchase_price'] + vehicle['additional_costs']
                 difference = vehicle['fipe_price'] - total_cost
