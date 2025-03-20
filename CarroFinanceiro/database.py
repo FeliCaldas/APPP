@@ -165,7 +165,24 @@ def update_maintenance(maintenance_id, maintenance_data):
 def delete_maintenance(maintenance_id):
     conn = get_db()
     c = conn.cursor()
-    c.execute('DELETE FROM maintenance WHERE id = ?', (maintenance_id,))
+    
+    # Primeiro obtém os dados da manutenção antes de excluí-la
+    c.execute('SELECT vehicle_id, cost FROM maintenance WHERE id = ?', (maintenance_id,))
+    maintenance = c.fetchone()
+    
+    if maintenance:
+        vehicle_id, maintenance_cost = maintenance
+        
+        # Remove a manutenção
+        c.execute('DELETE FROM maintenance WHERE id = ?', (maintenance_id,))
+        
+        # Atualiza os custos adicionais do veículo subtraindo o custo da manutenção
+        c.execute('''
+            UPDATE vehicles
+            SET additional_costs = additional_costs - ?
+            WHERE id = ?
+        ''', (maintenance_cost, vehicle_id))
+        
     conn.commit()
     conn.close()
 
