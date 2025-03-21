@@ -6,6 +6,7 @@
     pkgs.python311Packages.requests
     pkgs.python311Packages.pillow
     pkgs.python311Packages.cachetools
+    pkgs.python311Packages.tenacity
     pkgs.zlib
     pkgs.tk
     pkgs.tcl

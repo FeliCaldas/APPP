@@ -10,6 +10,7 @@ setup(
         "pillow>=11.1.0", 
         "requests>=2.32.3",
         "cachetools>=5.5.2",
+        "tenacity>=9.0.0",  # Adicionada dependência
     ],
     python_requires=">=3.11",
 )
