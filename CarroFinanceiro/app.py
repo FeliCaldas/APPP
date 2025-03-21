@@ -194,17 +194,14 @@ def add_maintenance_form(vehicle_id, maintenance_data=None):
 def view_maintenance_history(vehicle_id):
     maintenance_records = get_vehicle_maintenance(vehicle_id)
     
-    # Inicializar estado do formulário se não existir
-    if 'show_maintenance_form' not in st.session_state:
-        st.session_state.show_maintenance_form = {}
-    
     # Botão para adicionar nova manutenção
     if st.button("➕ Nova Manutenção", key=f"add_maintenance_{vehicle_id}"):
-        st.session_state.show_maintenance_form[vehicle_id] = True
+        st.session_state.show_maintenance_form = True
+        st.session_state.current_vehicle = vehicle_id
         
-    # Mostrar formulário quando necessário
-    if st.session_state.show_maintenance_form.get(vehicle_id, False):
-        with st.form(key=f"maintenance_form_{vehicle_id}"):
+    # Mostrar formulário de nova manutenção
+    if getattr(st.session_state, 'show_maintenance_form', False) and getattr(st.session_state, 'current_vehicle', None) == vehicle_id:
+        with st.container():
             date = st.date_input("Data da Manutenção")
             description = st.text_area("Descrição do Serviço")
             cost = st.number_input("Custo (R$)", min_value=0.0, step=10.0, format="%.2f")
@@ -214,44 +211,47 @@ def view_maintenance_history(vehicle_id):
             author = st.selectbox("Autor da Manutenção", 
                                 ["Antonio", "Fernando"])
 
-            submit = st.form_submit_button("Salvar Manutenção")
-            
-            if submit:
-                try:
-                    maintenance_info = {
-                        'vehicle_id': vehicle_id,
-                        'date': date.strftime('%Y-%m-%d'),
-                        'description': description,
-                        'cost': cost,
-                        'mileage': mileage,
-                        'next_maintenance_date': next_date.strftime('%Y-%m-%d'),
-                        'author': author
-                    }
-                    add_maintenance(maintenance_info)
-                    st.success("Manutenção registrada com sucesso!")
-                    st.session_state.show_maintenance_form[vehicle_id] = False
-                    st.rerun()
-                except Exception as e:
-                    st.error(f"Erro ao registrar manutenção: {str(e)}")
+            col1, col2 = st.columns(2)
+            with col1:
+                if st.button("💾 Salvar", key=f"save_maint_{vehicle_id}"):
+                    try:
+                        maintenance_info = {
+                            'vehicle_id': vehicle_id,
+                            'date': date.strftime('%Y-%m-%d'),
+                            'description': description,
+                            'cost': cost,
+                            'mileage': mileage,
+                            'next_maintenance_date': next_date.strftime('%Y-%m-%d'),
+                            'author': author
+                        }
+                        add_maintenance(maintenance_info)
+                        st.success("Manutenção registrada com sucesso!")
+                        st.session_state.show_maintenance_form = False
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"Erro ao registrar manutenção: {str(e)}")
 
-        if st.button("❌ Cancelar", key=f"cancel_maintenance_{vehicle_id}"):
-            st.session_state.show_maintenance_form[vehicle_id] = False
-            st.rerun()
+            with col2:
+                if st.button("❌ Cancelar", key=f"cancel_add_{vehicle_id}"):
+                    st.session_state.show_maintenance_form = False
+                    st.rerun()
 
     # Exibir manutenções existentes
     if maintenance_records:
         for record in maintenance_records:
-            with st.expander(f"📅 Manutenção em {record['date']} - {record['description'][:30]}..."):
-                st.write(f"**Autor:** {record['author']}")
-                st.write(f"**Descrição:** {record['description']}")
-                st.write(f"**Custo:** R$ {record['cost']:.2f}")
-                st.write(f"**Quilometragem:** {record['mileage']} km")
-                if record['next_maintenance_date']:
-                    st.write(f"**Próxima Manutenção:** {record['next_maintenance_date']}")
+            st.markdown("---")
+            st.markdown(f"### 📅 Manutenção em {record['date']}")
+            st.markdown(f"**Autor:** {record['author']}")
+            st.markdown(f"**Descrição:** {record['description']}")
+            st.markdown(f"**Custo:** R$ {record['cost']:.2f}")
+            st.markdown(f"**Quilometragem:** {record['mileage']} km")
+            if record['next_maintenance_date']:
+                st.markdown(f"**Próxima Manutenção:** {record['next_maintenance_date']}")
 
-                col1, col2 = st.columns(2)
-                with col2:
-                    if st.button("🗑️ Excluir", key=f"delete_maint_{record['id']}"):
+            col1, col2 = st.columns(2)
+            with col2:
+                if st.button("🗑️ Excluir", key=f"delete_maint_{record['id']}"):
+                    if st.button("⚠️ Confirmar Exclusão", key=f"confirm_delete_maint_{record['id']}"):
                         delete_maintenance(record['id'])
                         st.success("Manutenção excluída com sucesso!")
                         st.rerun()
