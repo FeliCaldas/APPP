@@ -241,36 +241,39 @@ def view_maintenance_history(vehicle_id):
     if maintenance_records:
         st.markdown("### Histórico de Manutenções")
         for record in maintenance_records:
-            with st.expander(f"📅 {record['date']} - {record['description'][:30]}..."):
-                st.markdown("""
-                    <div class="maintenance-card">
-                        <p><strong>Autor:</strong> {author}</p>
-                        <p><strong>Descrição:</strong> {description}</p>
-                        <p><strong>Custo:</strong> R$ {cost:.2f}</p>
-                        <p><strong>Quilometragem:</strong> {mileage} km</p>
-                    </div>
-                """.format(
-                    author=record['author'],
-                    description=record['description'],
-                    cost=record['cost'],
-                    mileage=record['mileage']
-                ), unsafe_allow_html=True)
+            st.markdown("---")  # Separador entre registros
+            st.markdown(f"### 📅 {record['date']} - {record['description'][:30]}...")
+            st.markdown("""
+                <div class="maintenance-card">
+                    <p><strong>Autor:</strong> {author}</p>
+                    <p><strong>Descrição:</strong> {description}</p>
+                    <p><strong>Custo:</strong> R$ {cost:.2f}</p>
+                    <p><strong>Quilometragem:</strong> {mileage} km</p>
+                </div>
+            """.format(
+                author=record['author'],
+                description=record['description'],
+                cost=record['cost'],
+                mileage=record['mileage']
+            ), unsafe_allow_html=True)
 
-                if st.button("🗑️ Excluir", key=f"delete_maint_{record['id']}"):
+            col1, col2 = st.columns([3, 1])
+            with col2:
+                if st.button("🗑️", key=f"delete_maint_{record['id']}"):
                     st.session_state.delete_confirmation = record['id']
 
-                if st.session_state.delete_confirmation == record['id']:
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        if st.button("⚠️ Confirmar Exclusão", key=f"confirm_delete_maint_{record['id']}"):
-                            delete_maintenance(record['id'])
-                            st.success("Manutenção excluída com sucesso!")
-                            st.session_state.delete_confirmation = None
-                            st.rerun()
-                    with col2:
-                        if st.button("❌ Cancelar", key=f"cancel_delete_maint_{record['id']}"):
-                            st.session_state.delete_confirmation = None
-                            st.rerun()
+            if st.session_state.delete_confirmation == record['id']:
+                col1, col2 = st.columns(2)
+                with col1:
+                    if st.button("⚠️ Confirmar", key=f"confirm_delete_maint_{record['id']}"):
+                        delete_maintenance(record['id'])
+                        st.success("Manutenção excluída com sucesso!")
+                        st.session_state.delete_confirmation = None
+                        st.rerun()
+                with col2:
+                    if st.button("❌ Cancelar", key=f"cancel_delete_maint_{record['id']}"):
+                        st.session_state.delete_confirmation = None
+                        st.rerun()
     else:
         st.info("Nenhuma manutenção registrada para este veículo.")
 
