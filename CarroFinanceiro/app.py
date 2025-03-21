@@ -105,6 +105,42 @@ def main():
                 padding: 5px;
             }
         }
+        /* Ajustes específicos para imagens responsivas */
+        .responsive-img {
+            max-width: 100% !important;
+            height: auto !important;
+            margin: 0 auto !important;
+            display: block !important;
+            border-radius: 10px !important;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+        }
+        .img-container {
+            position: relative !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 auto !important;
+            padding: 10px !important;
+            overflow: hidden !important;
+        }
+        /* Forçar imagem a ficar dentro do container em telas pequenas */
+        @media (max-width: 768px) {
+            .img-container img {
+                max-width: 100% !important;
+                width: 100% !important;
+                height: auto !important;
+                object-fit: contain !important;
+            }
+            .stImage {
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            [data-testid="stImage"] {
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+        }
         </style>
     """, unsafe_allow_html=True)
 
@@ -428,15 +464,14 @@ def view_vehicles():
                 if vehicle['image_data']:
                     try:
                         image_bytes = base64.b64decode(vehicle['image_data'])
-                        # Criar um container para a imagem
                         with st.container():
                             st.markdown('<div class="img-container">', unsafe_allow_html=True)
                             st.image(
                                 image_bytes,
-                                width=400,  # Define a largura da imagem para um tamanho agradável
+                                use_column_width=True,  # Usar largura da coluna
                                 output_format="PNG",
                                 caption=f"{vehicle['brand']} {vehicle['model']}",
-                                clamp=True  # Isso ajuda a manter a proporção da imagem
+                                clamp=True
                             )
                             st.markdown('</div>', unsafe_allow_html=True)
                     except Exception as e:
