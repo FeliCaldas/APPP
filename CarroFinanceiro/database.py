@@ -107,7 +107,13 @@ def update_vehicle(vehicle_id, vehicle_data):
 def delete_vehicle(vehicle_id):
     conn = get_db()
     c = conn.cursor()
+    
+    # Primeiro, exclui todas as manutenções associadas ao veículo
+    c.execute('DELETE FROM maintenance WHERE vehicle_id = ?', (vehicle_id,))
+    
+    # Em seguida, exclui o veículo
     c.execute('DELETE FROM vehicles WHERE id = ?', (vehicle_id,))
+    
     conn.commit()
     conn.close()
 
