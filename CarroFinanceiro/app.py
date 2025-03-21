@@ -249,12 +249,20 @@ def view_maintenance_history(vehicle_id):
                 st.markdown(f"**Próxima Manutenção:** {record['next_maintenance_date']}")
 
             col1, col2 = st.columns(2)
-            with col2:
+            with col1:
                 if st.button("🗑️ Excluir", key=f"delete_maint_{record['id']}"):
+                    st.session_state.delete_confirmation = record['id']
+
+            if st.session_state.get('delete_confirmation') == record['id']:
+                with col2:
                     if st.button("⚠️ Confirmar Exclusão", key=f"confirm_delete_maint_{record['id']}"):
                         delete_maintenance(record['id'])
                         st.success("Manutenção excluída com sucesso!")
+                        st.session_state.delete_confirmation = None
                         st.rerun()
+                    if st.button("❌ Cancelar Exclusão", key=f"cancel_delete_maint_{record['id']}"):
+                        st.session_state.delete_confirmation = None
+
     else:
         st.info("Nenhuma manutenção registrada para este veículo.")
 
