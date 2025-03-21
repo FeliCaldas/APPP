@@ -444,7 +444,7 @@ def add_vehicle_form(vehicle_data=None):
 
     except Exception as e:
         st.error(f"Erro ao carregar o formulário: {str(e)}")
-        logger.error(f"Erro no formulário: {e}")
+        logging.error(f"Erro no formulário: {e}")
         return
 
     button_text = "Salvar Alterações" if is_editing else "Salvar Veículo"
