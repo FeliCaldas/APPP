@@ -194,6 +194,10 @@ def add_maintenance_form(vehicle_id, maintenance_data=None):
 def view_maintenance_history(vehicle_id):
     maintenance_records = get_vehicle_maintenance(vehicle_id)
     
+    # Inicializar o estado de confirmação de exclusão se não existir
+    if 'delete_confirmation' not in st.session_state:
+        st.session_state.delete_confirmation = None
+    
     # Botão para adicionar nova manutenção
     if st.button("➕ Nova Manutenção", key=f"add_maintenance_{vehicle_id}"):
         st.session_state.show_maintenance_form = True
@@ -206,8 +210,6 @@ def view_maintenance_history(vehicle_id):
             description = st.text_area("Descrição do Serviço")
             cost = st.number_input("Custo (R$)", min_value=0.0, step=10.0, format="%.2f")
             mileage = st.number_input("Quilometragem", min_value=0)
-            next_date = st.date_input("Próxima Manutenção", 
-                                    value=datetime.now() + timedelta(days=180))
             author = st.selectbox("Autor da Manutenção", 
                                 ["Antonio", "Fernando"])
 
@@ -221,7 +223,6 @@ def view_maintenance_history(vehicle_id):
                             'description': description,
                             'cost': cost,
                             'mileage': mileage,
-                            'next_maintenance_date': next_date.strftime('%Y-%m-%d'),
                             'author': author
                         }
                         add_maintenance(maintenance_info)
@@ -240,29 +241,36 @@ def view_maintenance_history(vehicle_id):
     if maintenance_records:
         st.markdown("### Histórico de Manutenções")
         for record in maintenance_records:
-            st.markdown(f"**📅 Data:** {record['date']}")
-            st.markdown(f"**Autor:** {record['author']}")
-            st.markdown(f"**Descrição:** {record['description']}")
-            st.markdown(f"**Custo:** R$ {record['cost']:.2f}")
-            st.markdown(f"**Quilometragem:** {record['mileage']} km")
-            if record['next_maintenance_date']:
-                st.markdown(f"**Próxima Manutenção:** {record['next_maintenance_date']}")
+            with st.expander(f"📅 {record['date']} - {record['description'][:30]}..."):
+                st.markdown("""
+                    <div class="maintenance-card">
+                        <p><strong>Autor:</strong> {author}</p>
+                        <p><strong>Descrição:</strong> {description}</p>
+                        <p><strong>Custo:</strong> R$ {cost:.2f}</p>
+                        <p><strong>Quilometragem:</strong> {mileage} km</p>
+                    </div>
+                """.format(
+                    author=record['author'],
+                    description=record['description'],
+                    cost=record['cost'],
+                    mileage=record['mileage']
+                ), unsafe_allow_html=True)
 
-            col1, col2 = st.columns(2)
-            with col1:
                 if st.button("🗑️ Excluir", key=f"delete_maint_{record['id']}"):
                     st.session_state.delete_confirmation = record['id']
 
-            if st.session_state.get('delete_confirmation') == record['id']:
-                with col2:
-                    if st.button("⚠️ Confirmar Exclusão", key=f"confirm_delete_maint_{record['id']}"):
-                        delete_maintenance(record['id'])
-                        st.success("Manutenção excluída com sucesso!")
-                        st.session_state.delete_confirmation = None
-                        st.rerun()
-                    if st.button("❌ Cancelar Exclusão", key=f"cancel_delete_maint_{record['id']}"):
-                        st.session_state.delete_confirmation = None
-
+                if st.session_state.delete_confirmation == record['id']:
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        if st.button("⚠️ Confirmar Exclusão", key=f"confirm_delete_maint_{record['id']}"):
+                            delete_maintenance(record['id'])
+                            st.success("Manutenção excluída com sucesso!")
+                            st.session_state.delete_confirmation = None
+                            st.rerun()
+                    with col2:
+                        if st.button("❌ Cancelar", key=f"cancel_delete_maint_{record['id']}"):
+                            st.session_state.delete_confirmation = None
+                            st.rerun()
     else:
         st.info("Nenhuma manutenção registrada para este veículo.")
 
@@ -400,9 +408,9 @@ def view_vehicles():
 
     vehicles = get_vehicles()
 
-    # Inicializa os estados se não existirem
-    if 'delete_confirmation' not in st.session_state:
-        st.session_state.delete_confirmation = {}
+    # Inicializa os estados
+    if 'delete_vehicle_confirmation' not in st.session_state:
+        st.session_state.delete_vehicle_confirmation = None
     if 'editing_vehicle' not in st.session_state:
         st.session_state.editing_vehicle = None
 
@@ -462,14 +470,20 @@ def view_vehicles():
 
                 with col2:
                     if st.button(f"🗑️ Excluir", key=f"delete_{vehicle['id']}", type="primary"):
-                        st.session_state.delete_confirmation[vehicle['id']] = True
+                        st.session_state.delete_vehicle_confirmation = vehicle['id']
 
-                    if st.session_state.delete_confirmation.get(vehicle['id'], False):
-                        if st.button(f"⚠️ Confirmar Exclusão", key=f"confirm_{vehicle['id']}", type="primary"):
-                            delete_vehicle(vehicle['id'])
-                            st.success("Veículo excluído com sucesso!")
-                            st.session_state.delete_confirmation[vehicle['id']] = False
-                            st.rerun()
+            if st.session_state.delete_vehicle_confirmation == vehicle['id']:
+                col1, col2 = st.columns(2)
+                with col1:
+                    if st.button(f"⚠️ Confirmar", key=f"confirm_{vehicle['id']}", type="primary"):
+                        delete_vehicle(vehicle['id'])
+                        st.success("Veículo excluído com sucesso!")
+                        st.session_state.delete_vehicle_confirmation = None
+                        st.rerun()
+                with col2:
+                    if st.button("❌ Cancelar", key=f"cancel_delete_{vehicle['id']}", type="primary"):
+                        st.session_state.delete_vehicle_confirmation = None
+                        st.rerun()
 
 if __name__ == "__main__":
     main()

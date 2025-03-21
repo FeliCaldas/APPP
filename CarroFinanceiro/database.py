@@ -31,7 +31,7 @@ def init_db():
     if 'color' not in columns:
         c.execute('ALTER TABLE vehicles ADD COLUMN color TEXT')
 
-    # Nova tabela para manutenções com campo de autor
+    # Nova tabela para manutenções sem campo next_maintenance_date
     c.execute('''
         CREATE TABLE IF NOT EXISTS maintenance (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -40,7 +40,6 @@ def init_db():
             description TEXT NOT NULL,
             cost REAL NOT NULL,
             mileage INTEGER,
-            next_maintenance_date TEXT,
             author TEXT NOT NULL,  
             FOREIGN KEY (vehicle_id) REFERENCES vehicles (id)
         )
@@ -122,17 +121,16 @@ def add_maintenance(maintenance_data):
     conn = get_db()
     c = conn.cursor()
     
-    # Adiciona a manutenção
+    # Adiciona a manutenção sem next_maintenance_date
     c.execute('''
-        INSERT INTO maintenance (vehicle_id, date, description, cost, mileage, next_maintenance_date, author)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO maintenance (vehicle_id, date, description, cost, mileage, author)
+        VALUES (?, ?, ?, ?, ?, ?)
     ''', (
         maintenance_data['vehicle_id'],
         maintenance_data['date'],
         maintenance_data['description'],
         maintenance_data['cost'],
         maintenance_data['mileage'],
-        maintenance_data['next_maintenance_date'],
         maintenance_data['author']
     ))
     
@@ -163,14 +161,13 @@ def update_maintenance(maintenance_id, maintenance_data):
     c = conn.cursor()
     c.execute('''
         UPDATE maintenance
-        SET date=?, description=?, cost=?, mileage=?, next_maintenance_date=?, author=?
+        SET date=?, description=?, cost=?, mileage=?, author=?
         WHERE id=?
     ''', (
         maintenance_data['date'],
         maintenance_data['description'],
         maintenance_data['cost'],
         maintenance_data['mileage'],
-        maintenance_data['next_maintenance_date'],
         maintenance_data['author'],
         maintenance_id
     ))
