@@ -15,8 +15,19 @@ logger = logging.getLogger(__name__)
 
 BASE_URL = "https://parallelum.com.br/fipe/api/v1/carros"
 
-# Cache com TTL menor para testes
-cache = TTLCache(maxsize=100, ttl=1800)  # 30 minutos
+# Cache para 24 horas para reduzir chamadas à API
+cache = TTLCache(maxsize=100, ttl=86400)  # 24 horas
+
+# Dados de fallback para quando a API falhar
+FALLBACK_BRANDS = pd.DataFrame([
+    {'codigo': '21', 'nome': 'FIAT'},
+    {'codigo': '59', 'nome': 'VOLKSWAGEN'},
+    {'codigo': '23', 'nome': 'CHEVROLET'},
+    {'codigo': '22', 'nome': 'FORD'},
+    {'codigo': '44', 'nome': 'HYUNDAI'},
+    {'codigo': '25', 'nome': 'HONDA'},
+    {'codigo': '48', 'nome': 'TOYOTA'}
+])
 
 def create_session():
     session = requests.Session()
@@ -35,50 +46,33 @@ def get_fipe_brands():
     try:
         logger.info("Tentando obter marcas da tabela FIPE...")
         session = create_session()
-        response = session.get(f"{BASE_URL}/marcas")
-        
-        # Rate limiting mais suave
-        sleep(0.5)
+        response = session.get(f"{BASE_URL}/marcas", timeout=5)  # Timeout de 5 segundos
         
         if response.status_code == 200:
             data = response.json()
             logger.info(f"Obtidas {len(data)} marcas com sucesso")
             return pd.DataFrame(data)
             
-        # Se não conseguir dados da API, retorna algumas marcas padrão
-        if response.status_code in [429, 503, 504]:
-            logger.warning("API com limitação. Usando dados fallback...")
-            return pd.DataFrame([
-                {'codigo': '1', 'nome': 'FIAT'},
-                {'codigo': '2', 'nome': 'VOLKSWAGEN'},
-                {'codigo': '3', 'nome': 'CHEVROLET'},
-                {'codigo': '4', 'nome': 'FORD'}
-            ])
+        logger.warning(f"API retornou status {response.status_code}. Usando dados fallback...")
+        return FALLBACK_BRANDS
             
-        response.raise_for_status()
     except Exception as e:
         logger.error(f"Erro ao obter marcas da tabela FIPE: {e}")
-        # Retorna marcas padrão em caso de erro
-        return pd.DataFrame([
-            {'codigo': '1', 'nome': 'FIAT'},
-            {'codigo': '2', 'nome': 'VOLKSWAGEN'},
-            {'codigo': '3', 'nome': 'CHEVROLET'},
-            {'codigo': '4', 'nome': 'FORD'}
-        ])
+        return FALLBACK_BRANDS
 
 @cached(cache)
 def get_fipe_models(brand_code):
     try:
         session = create_session()
-        response = session.get(f"{BASE_URL}/marcas/{brand_code}/modelos")
-        sleep(1)
+        response = session.get(f"{BASE_URL}/marcas/{brand_code}/modelos", timeout=5)
+        sleep(0.5)  # Reduzido tempo de espera
         
         if response.status_code == 200:
             return pd.DataFrame(response.json()['modelos'])
-        response.raise_for_status()
+        return pd.DataFrame([{'codigo': '0', 'nome': 'Erro ao carregar modelos'}])
     except Exception as e:
         logging.error(f"Erro ao obter modelos da tabela FIPE: {e}")
-        raise Exception("Erro ao obter modelos da tabela FIPE")
+        return pd.DataFrame([{'codigo': '0', 'nome': 'Erro ao carregar modelos'}])
 
 @cached(cache)
 def get_fipe_years(brand_code, model_code):

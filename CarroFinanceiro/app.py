@@ -363,28 +363,38 @@ def add_vehicle_form(vehicle_data=None):
     st.header("Editar Veículo" if is_editing else "Adicionar Novo Veículo")
 
     try:
-        # Interface mais touch-friendly
         with st.container():
-            with st.spinner('Carregando marcas...'):
-                brands = get_fipe_brands()
-                if brands.empty:
-                    st.error("Não foi possível carregar as marcas. Tente novamente mais tarde.")
-                    return
-
-            selected_brand = st.selectbox(
+            # Carregar marcas com cache
+            brands = get_fipe_brands()
+            
+            # Simplificar seleção de marca
+            brand_options = {row['nome']: row['codigo'] for _, row in brands.iterrows()}
+            selected_brand_name = st.selectbox(
                 "Marca do Veículo",
-                options=brands['codigo'].tolist(),
-                format_func=lambda x: brands[brands['codigo'] == x]['nome'].iloc[0],
-                index=0 if not is_editing else next((i for i, row in brands.iterrows() if row['nome'] == vehicle_data['brand']), 0)
+                options=list(brand_options.keys()),
+                index=0 if not is_editing else list(brand_options.keys()).index(vehicle_data['brand'])
             )
+            selected_brand = brand_options[selected_brand_name]
 
-            with st.spinner('Carregando modelos...'):
-                try:
+            # Carregar modelos com tratamento de erro
+            try:
+                with st.spinner('Carregando modelos...'):
                     models = get_fipe_models(selected_brand)
-                except Exception as e:
-                    st.error(f"Erro ao carregar modelos: {str(e)}")
-                    return
-                
+                    if not models.empty and 'codigo' in models.columns:
+                        model_options = {row['nome']: row['codigo'] for _, row in models.iterrows()}
+                        selected_model_name = st.selectbox(
+                            "Modelo do Veículo",
+                            options=list(model_options.keys())
+                        )
+                        selected_model = model_options[selected_model_name]
+                    else:
+                        st.error("Erro ao carregar modelos. Tente novamente mais tarde.")
+                        return
+            except Exception as e:
+                st.error("Erro ao carregar modelos. Por favor, tente novamente.")
+                logging.error(f"Erro ao carregar modelos: {e}")
+                return
+
             years = get_fipe_years(selected_brand, selected_model)
             selected_year = st.selectbox(
                 "Ano do Veículo",
