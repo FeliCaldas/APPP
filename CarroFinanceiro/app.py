@@ -457,13 +457,9 @@ def add_vehicle_form(vehicle_data=None):
             if is_editing:
                 image_data = vehicle_data['image_data']
                 if uploaded_file:
-                    image_bytes = uploaded_file.getvalue()
-                    image_data = base64.b64encode(image_bytes).decode()
+                    image_data = save_image(uploaded_file)
             else:
-                image_data = None
-                if uploaded_file:
-                    image_bytes = uploaded_file.getvalue()
-                    image_data = base64.b64encode(image_bytes).decode()
+                image_data = save_image(uploaded_file)
 
             total_cost = purchase_price + additional_costs
             fipe_difference = fipe_price - total_cost
