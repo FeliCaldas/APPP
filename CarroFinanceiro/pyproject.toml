@@ -12,20 +12,6 @@ dependencies = [
     "cachetools>=5.5.2"
 ]
 
-[tool.poetry]
-name = "carrofinanceiro"
-version = "0.1.0"
-description = "Gerenciamento Financeiro de Veículos"
-authors = ["Seu Nome <seuemail@example.com>"]
-
-[tool.poetry.dependencies]
-python = "^3.11"
-streamlit = "^1.43.2"
-pandas = "^2.2.3"
-requests = "^2.32.3"
-Pillow = "^11.1.0"
-cachetools = "^5.5.2"
-
 [build-system]
 requires = ["setuptools>=42", "wheel"]
 build-backend = "setuptools.build_meta"
