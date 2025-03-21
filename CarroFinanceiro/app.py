@@ -117,29 +117,24 @@ def main():
         .img-container {
             position: relative !important;
             width: 100% !important;
-            max-width: 100% !important;
+            max-width: 500px !important;  /* Reduzido de 800px para 500px */
             margin: 0 auto !important;
             padding: 10px !important;
             overflow: hidden !important;
         }
         /* Forçar imagem a ficar dentro do container em telas pequenas */
         @media (max-width: 768px) {
-            .img-container img {
+            .img-container {
                 max-width: 100% !important;
-                width: 100% !important;
-                height: auto !important;
-                object-fit: contain !important;
+                padding: 5px !important;
             }
-            .stImage {
-                width: 100% !important;
-                margin: 0 !important;
-                padding: 0 !important;
-            }
-            [data-testid="stImage"] {
-                width: 100% !important;
-                margin: 0 !important;
-                padding: 0 !important;
-            }
+        }
+        /* Estilos para a imagem dentro do container */
+        [data-testid="stImage"] > img {
+            max-height: 400px !important;  /* Altura máxima adicionada */
+            width: auto !important;
+            object-fit: contain !important;
+            margin: 0 auto !important;
         }
         </style>
     """, unsafe_allow_html=True)
@@ -468,7 +463,7 @@ def view_vehicles():
                             st.markdown('<div class="img-container">', unsafe_allow_html=True)
                             st.image(
                                 image_bytes,
-                                use_column_width=True,  # Usar largura da coluna
+                                use_container_width=True,
                                 output_format="PNG",
                                 caption=f"{vehicle['brand']} {vehicle['model']}",
                                 clamp=True
