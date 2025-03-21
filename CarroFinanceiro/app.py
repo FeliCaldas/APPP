@@ -170,20 +170,23 @@ def add_maintenance_form(vehicle_id, maintenance_data=None):
         )
 
         # Campo para outro autor
-        author = ""
+        author = author_type
         if author_type == "Outro":
             other_author = st.text_input(
-                "Nome do Autor",
+                "Nome do Outro Autor",
                 value=maintenance_data['author'] if is_editing and maintenance_data['author'] not in ["Antonio", "Fernando"] else "",
                 key=f"other_author_{vehicle_id}"
             )
-            author = other_author
-        else:
-            author = author_type
+            if other_author:  # Só usa o valor do outro autor se ele for preenchido
+                author = other_author
 
         submit = st.form_submit_button("Salvar Manutenção")
 
         if submit:
+            if author_type == "Outro" and not other_author:
+                st.error("Por favor, insira o nome do outro autor.")
+                return
+
             try:
                 maintenance_info = {
                     'vehicle_id': vehicle_id,
