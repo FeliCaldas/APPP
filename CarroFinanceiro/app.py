@@ -158,23 +158,28 @@ def add_maintenance_form(vehicle_id, maintenance_data=None):
         )
 
         # Seleção do autor
-        author = st.selectbox(
+        author_type = st.selectbox(
             "Autor da Manutenção",
             ["Antonio", "Fernando", "Outro"],
+            key=f"author_type_{vehicle_id}",
             index=0 if not is_editing else (
-                ["Antonio", "Fernando", "Outro"].index(maintenance_data['author'])
-                if maintenance_data['author'] in ["Antonio", "Fernando"]
-                else 2
+                ["Antonio", "Fernando", "Outro"].index("Outro")
+                if maintenance_data['author'] not in ["Antonio", "Fernando"]
+                else ["Antonio", "Fernando", "Outro"].index(maintenance_data['author'])
             )
         )
 
         # Campo para outro autor
-        if author == "Outro":
+        author = ""
+        if author_type == "Outro":
             other_author = st.text_input(
                 "Nome do Autor",
-                value=maintenance_data['author'] if is_editing and maintenance_data['author'] not in ["Antonio", "Fernando"] else ""
+                value=maintenance_data['author'] if is_editing and maintenance_data['author'] not in ["Antonio", "Fernando"] else "",
+                key=f"other_author_{vehicle_id}"
             )
             author = other_author
+        else:
+            author = author_type
 
         submit = st.form_submit_button("Salvar Manutenção")
 
