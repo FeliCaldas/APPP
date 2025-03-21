@@ -384,7 +384,8 @@ def add_vehicle_form(vehicle_data=None):
                         model_options = {row['nome']: row['codigo'] for _, row in models.iterrows()}
                         selected_model_name = st.selectbox(
                             "Modelo do Veículo",
-                            options=list(model_options.keys())
+                            options=list(model_options.keys()),
+                            index=0 if not is_editing else list(model_options.keys()).index(vehicle_data['model'])
                         )
                         selected_model = model_options[selected_model_name]
                     else:
@@ -395,13 +396,25 @@ def add_vehicle_form(vehicle_data=None):
                 logging.error(f"Erro ao carregar modelos: {e}")
                 return
 
-            years = get_fipe_years(selected_brand, selected_model)
-            selected_year = st.selectbox(
-                "Ano do Veículo",
-                options=years['codigo'].tolist(),
-                format_func=lambda x: years[years['codigo'] == x]['nome'].iloc[0],
-                index=0 if not is_editing else next((i for i, row in years.iterrows() if row['nome'] == vehicle_data['year']), 0)
-            )
+            # Carregar anos com tratamento de erro
+            try:
+                with st.spinner('Carregando anos...'):
+                    years = get_fipe_years(selected_brand, selected_model)
+                    if not years.empty and 'codigo' in years.columns:
+                        year_options = {row['nome']: row['codigo'] for _, row in years.iterrows()}
+                        selected_year_name = st.selectbox(
+                            "Ano do Veículo",
+                            options=list(year_options.keys()),
+                            index=0 if not is_editing else list(year_options.keys()).index(vehicle_data['year'])
+                        )
+                        selected_year = year_options[selected_year_name]
+                    else:
+                        st.error("Erro ao carregar anos. Tente novamente mais tarde.")
+                        return
+            except Exception as e:
+                st.error("Erro ao carregar anos. Por favor, tente novamente.")
+                logging.error(f"Erro ao carregar anos: {e}")
+                return
 
             color = st.text_input(
                 "Cor do Veículo",
@@ -456,9 +469,9 @@ def add_vehicle_form(vehicle_data=None):
             fipe_difference = fipe_price - total_cost
 
             vehicle_info = {
-                'brand': brands[brands['codigo'] == selected_brand]['nome'].iloc[0],
-                'model': models[models['codigo'] == selected_model]['nome'].iloc[0],
-                'year': years[years['codigo'] == selected_year]['nome'].iloc[0],
+                'brand': selected_brand_name,
+                'model': selected_model_name,
+                'year': selected_year_name,
                 'color': color,
                 'purchase_price': purchase_price,
                 'additional_costs': additional_costs,
