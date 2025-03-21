@@ -134,6 +134,28 @@ def add_maintenance_form(vehicle_id, maintenance_data=None):
             key=f"date_{vehicle_id}"
         )
 
+        # Seleção do autor
+        author_type = st.selectbox(
+            "Autor da Manutenção",
+            ["Antonio", "Fernando", "Outro"],
+            key=f"author_type_{vehicle_id}",
+            index=0 if not is_editing else (
+                ["Antonio", "Fernando", "Outro"].index("Outro")
+                if maintenance_data['author'] not in ["Antonio", "Fernando"]
+                else ["Antonio", "Fernando", "Outro"].index(maintenance_data['author'])
+            )
+        )
+
+        # Campo de texto para "Outro" autor
+        if author_type == "Outro":
+            author = st.text_input(
+                "Nome do Autor",
+                value=maintenance_data['author'] if is_editing and maintenance_data['author'] not in ["Antonio", "Fernando"] else "",
+                key=f"author_other_{vehicle_id}"
+            )
+        else:
+            author = author_type
+
         description = st.text_area(
             "Descrição do Serviço",
             value=maintenance_data['description'] if is_editing else "",
@@ -174,7 +196,8 @@ def add_maintenance_form(vehicle_id, maintenance_data=None):
                 'description': description,
                 'cost': cost,
                 'mileage': mileage,
-                'next_maintenance_date': next_date.strftime('%Y-%m-%d')
+                'next_maintenance_date': next_date.strftime('%Y-%m-%d'),
+                'author': author
             }
 
             try:
@@ -266,6 +289,7 @@ def view_maintenance_history(vehicle_id):
                 maintenance_info = f"""
                     <div class="maintenance-card">
                     <h4>📅 {record['date']}</h4>
+                    <p><strong>Autor:</strong> {record['author']}</p>
                     <p><strong>Serviço:</strong> {record['description']}</p>
                     <p><strong>Custo:</strong> R$ {record['cost']:.2f}</p>
                     <p><strong>Quilometragem:</strong> {record['mileage']} km</p>

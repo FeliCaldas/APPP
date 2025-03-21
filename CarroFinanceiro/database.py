@@ -31,7 +31,7 @@ def init_db():
     if 'color' not in columns:
         c.execute('ALTER TABLE vehicles ADD COLUMN color TEXT')
 
-    # Nova tabela para manutenções
+    # Nova tabela para manutenções com campo de autor
     c.execute('''
         CREATE TABLE IF NOT EXISTS maintenance (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -41,9 +41,16 @@ def init_db():
             cost REAL NOT NULL,
             mileage INTEGER,
             next_maintenance_date TEXT,
+            author TEXT NOT NULL,  
             FOREIGN KEY (vehicle_id) REFERENCES vehicles (id)
         )
     ''')
+
+    # Adiciona a coluna author se não existir
+    c.execute("PRAGMA table_info(maintenance)")
+    columns = [column[1] for column in c.fetchall()]
+    if 'author' not in columns:
+        c.execute('ALTER TABLE maintenance ADD COLUMN author TEXT')
 
     conn.commit()
     conn.close()
@@ -111,15 +118,16 @@ def add_maintenance(maintenance_data):
     
     # Adiciona a manutenção
     c.execute('''
-        INSERT INTO maintenance (vehicle_id, date, description, cost, mileage, next_maintenance_date)
-        VALUES (?, ?, ?, ?, ?, ?)
+        INSERT INTO maintenance (vehicle_id, date, description, cost, mileage, next_maintenance_date, author)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
     ''', (
         maintenance_data['vehicle_id'],
         maintenance_data['date'],
         maintenance_data['description'],
         maintenance_data['cost'],
         maintenance_data['mileage'],
-        maintenance_data['next_maintenance_date']
+        maintenance_data['next_maintenance_date'],
+        maintenance_data['author']
     ))
     
     # Atualiza os custos adicionais do veículo
@@ -149,7 +157,7 @@ def update_maintenance(maintenance_id, maintenance_data):
     c = conn.cursor()
     c.execute('''
         UPDATE maintenance
-        SET date=?, description=?, cost=?, mileage=?, next_maintenance_date=?
+        SET date=?, description=?, cost=?, mileage=?, next_maintenance_date=?, author=?
         WHERE id=?
     ''', (
         maintenance_data['date'],
@@ -157,6 +165,7 @@ def update_maintenance(maintenance_id, maintenance_data):
         maintenance_data['cost'],
         maintenance_data['mileage'],
         maintenance_data['next_maintenance_date'],
+        maintenance_data['author'],
         maintenance_id
     ))
     conn.commit()
