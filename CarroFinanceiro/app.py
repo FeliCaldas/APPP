@@ -154,6 +154,35 @@ def main():
             object-fit: contain !important;
             margin: 0 auto !important;
         }
+
+        /* Ajuste específico para desktop */
+        @media (min-width: 768px) {
+            .img-container {
+                max-width: 400px !important;  /* Reduzido para telas maiores */
+                padding: 10px !important;
+                margin: 1rem auto !important;
+            }
+            [data-testid="stImage"] > img {
+                max-height: 300px !important;  /* Altura máxima reduzida para desktop */
+                max-width: 100% !important;
+                width: auto !important;
+                object-fit: contain !important;
+                margin: 0 auto !important;
+            }
+        }
+
+        /* Ajuste específico para mobile (mantém as configs anteriores) */
+        @media (max-width: 767px) {
+            .img-container {
+                max-width: 100% !important;
+                padding: 5px !important;
+            }
+            [data-testid="stImage"] > img {
+                max-height: 400px !important;
+                width: auto !important;
+                object-fit: contain !important;
+            }
+        }
         </style>
     """, unsafe_allow_html=True)
 
