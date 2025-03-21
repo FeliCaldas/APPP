@@ -503,13 +503,22 @@ def view_vehicles():
                         image_bytes = base64.b64decode(vehicle['image_data'])
                         with st.container():
                             st.markdown('<div class="img-container">', unsafe_allow_html=True)
-                            st.image(
-                                image_bytes,
-                                use_container_width=True,
-                                output_format="PNG",
-                                caption=f"{vehicle['brand']} {vehicle['model']}",
-                                clamp=True
-                            )
+                            image_col, delete_col = st.columns([6,1])
+                            with image_col:
+                                st.image(
+                                    image_bytes,
+                                    use_container_width=True,
+                                    output_format="PNG",
+                                    caption=f"{vehicle['brand']} {vehicle['model']}",
+                                    clamp=True
+                                )
+                            with delete_col:
+                                if st.button("🗑️", key=f"delete_image_{vehicle['id']}", help="Excluir imagem"):
+                                    vehicle_data = dict(vehicle)
+                                    vehicle_data['image_data'] = None
+                                    update_vehicle(vehicle['id'], vehicle_data)
+                                    st.success("Imagem excluída com sucesso!")
+                                    st.rerun()
                             st.markdown('</div>', unsafe_allow_html=True)
                     except Exception as e:
                         st.error(f"Erro ao carregar imagem: {str(e)}")
