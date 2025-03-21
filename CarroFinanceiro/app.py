@@ -362,57 +362,67 @@ def add_vehicle_form(vehicle_data=None):
     is_editing = vehicle_data is not None
     st.header("Editar Veículo" if is_editing else "Adicionar Novo Veículo")
 
-    # Interface mais touch-friendly
-    with st.container():
-        brands = get_fipe_brands()
-        selected_brand = st.selectbox(
-            "Marca do Veículo",
-            options=brands['codigo'].tolist(),
-            format_func=lambda x: brands[brands['codigo'] == x]['nome'].iloc[0],
-            index=0 if not is_editing else next((i for i, row in brands.iterrows() if row['nome'] == vehicle_data['brand']), 0)
-        )
+    try:
+        # Interface mais touch-friendly
+        with st.container():
+            with st.spinner('Carregando marcas...'):
+                brands = get_fipe_brands()
+                if brands.empty:
+                    st.error("Não foi possível carregar as marcas. Tente novamente mais tarde.")
+                    return
 
-        models = get_fipe_models(selected_brand)
-        selected_model = st.selectbox(
-            "Modelo do Veículo",
-            options=models['codigo'].tolist(),
-            format_func=lambda x: models[models['codigo'] == x]['nome'].iloc[0],
-            index=0 if not is_editing else next((i for i, row in models.iterrows() if row['nome'] == vehicle_data['model']), 0)
-        )
+            selected_brand = st.selectbox(
+                "Marca do Veículo",
+                options=brands['codigo'].tolist(),
+                format_func=lambda x: brands[brands['codigo'] == x]['nome'].iloc[0],
+                index=0 if not is_editing else next((i for i, row in brands.iterrows() if row['nome'] == vehicle_data['brand']), 0)
+            )
 
-        years = get_fipe_years(selected_brand, selected_model)
-        selected_year = st.selectbox(
-            "Ano do Veículo",
-            options=years['codigo'].tolist(),
-            format_func=lambda x: years[years['codigo'] == x]['nome'].iloc[0],
-            index=0 if not is_editing else next((i for i, row in years.iterrows() if row['nome'] == vehicle_data['year']), 0)
-        )
+            with st.spinner('Carregando modelos...'):
+                try:
+                    models = get_fipe_models(selected_brand)
+                except Exception as e:
+                    st.error(f"Erro ao carregar modelos: {str(e)}")
+                    return
+                
+            years = get_fipe_years(selected_brand, selected_model)
+            selected_year = st.selectbox(
+                "Ano do Veículo",
+                options=years['codigo'].tolist(),
+                format_func=lambda x: years[years['codigo'] == x]['nome'].iloc[0],
+                index=0 if not is_editing else next((i for i, row in years.iterrows() if row['nome'] == vehicle_data['year']), 0)
+            )
 
-        color = st.text_input(
-            "Cor do Veículo",
-            value=vehicle_data.get('color', '') if is_editing else ""
-        )
+            color = st.text_input(
+                "Cor do Veículo",
+                value=vehicle_data.get('color', '') if is_editing else ""
+            )
 
-        purchase_price = st.number_input(
-            "Valor de Aquisição (R$)",
-            min_value=0.0,
-            step=100.0,
-            format="%.2f",
-            value=vehicle_data['purchase_price'] if is_editing else 0.0
-        )
+            purchase_price = st.number_input(
+                "Valor de Aquisição (R$)",
+                min_value=0.0,
+                step=100.0,
+                format="%.2f",
+                value=vehicle_data['purchase_price'] if is_editing else 0.0
+            )
 
-        additional_costs = st.number_input(
-            "Custos Adicionais (R$)",
-            min_value=0.0,
-            step=100.0,
-            format="%.2f",
-            value=vehicle_data['additional_costs'] if is_editing else 0.0
-        )
+            additional_costs = st.number_input(
+                "Custos Adicionais (R$)",
+                min_value=0.0,
+                step=100.0,
+                format="%.2f",
+                value=vehicle_data['additional_costs'] if is_editing else 0.0
+            )
 
-        uploaded_file = st.file_uploader(
-            "Foto do Veículo (Toque para selecionar)",
-            type=['jpg', 'jpeg', 'png']
-        )
+            uploaded_file = st.file_uploader(
+                "Foto do Veículo (Toque para selecionar)",
+                type=['jpg', 'jpeg', 'png']
+            )
+
+    except Exception as e:
+        st.error(f"Erro ao carregar o formulário: {str(e)}")
+        logger.error(f"Erro no formulário: {e}")
+        return
 
     button_text = "Salvar Alterações" if is_editing else "Salvar Veículo"
     if st.button(button_text, use_container_width=True):
