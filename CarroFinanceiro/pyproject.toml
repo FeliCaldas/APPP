@@ -1,15 +1,23 @@
 [project]
-name = "carro-financeiro"
+name = "carrofinanceiro"
 version = "0.1.0"
-description = "Add your description here"
+description = "Gerenciador de veículos e manutenções"
 requires-python = ">=3.11"
+
 dependencies = [
     "streamlit>=1.43.2",
     "pandas>=2.2.3",
-    "requests>=2.32.3",
     "pillow>=11.1.0",
-    "cachetools>=5.5.2",
+    "requests>=2.32.3",
+    "cachetools>=5.5.2"
 ]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.metadata]
+allow-direct-references = true
 
 [tool.streamlit]
 browser.gatherUsageStats = false
