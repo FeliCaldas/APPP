@@ -207,6 +207,9 @@ def main():
     except Exception as e:
         logging.error(f"Erro na aplicação: {e}")
         st.error("Ocorreu um erro na aplicação. Consulte os logs para mais detalhes.")
+    finally:
+        st.title("Bem-vindo ao Gerenciador de Veículos")
+        st.sidebar.title("Menu")
 
 def add_maintenance_form(vehicle_id, maintenance_data=None):
     is_editing = maintenance_data is not None
@@ -331,9 +334,6 @@ def view_maintenance_history(vehicle_id):
             st.markdown(f"### 📅 {record['date']} - {record['description'][:30]}...")
             st.markdown(f"""
                 <div class="maintenance-card">
-                    <p><strong>Autor:</strong> {record['author']}</p>
-                    <p><strong>Descrição:</strong> {record['description']}</p>
-                    <p><strong>Custo:</strong> R$ {record['cost']:.2f}</p>
                     <p><strong>Quilometragem:</strong> {record['mileage']} km</p>
                 </div>
             """, unsafe_allow_html=True)
