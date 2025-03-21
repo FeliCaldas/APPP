@@ -240,21 +240,21 @@ def view_maintenance_history(vehicle_id):
     if maintenance_records:
         st.markdown("### Histórico de Manutenções")
         for record in maintenance_records:
-            with st.expander(f"📅 {record['date']} - {record['description'][:30]}..."):
-                st.markdown(f"**Autor:** {record['author']}")
-                st.markdown(f"**Descrição:** {record['description']}")
-                st.markdown(f"**Custo:** R$ {record['cost']:.2f}")
-                st.markdown(f"**Quilometragem:** {record['mileage']} km")
-                if record['next_maintenance_date']:
-                    st.markdown(f"**Próxima Manutenção:** {record['next_maintenance_date']}")
+            st.markdown(f"**📅 Data:** {record['date']}")
+            st.markdown(f"**Autor:** {record['author']}")
+            st.markdown(f"**Descrição:** {record['description']}")
+            st.markdown(f"**Custo:** R$ {record['cost']:.2f}")
+            st.markdown(f"**Quilometragem:** {record['mileage']} km")
+            if record['next_maintenance_date']:
+                st.markdown(f"**Próxima Manutenção:** {record['next_maintenance_date']}")
 
-                col1, col2 = st.columns(2)
-                with col2:
-                    if st.button("🗑️ Excluir", key=f"delete_maint_{record['id']}"):
-                        if st.button("⚠️ Confirmar Exclusão", key=f"confirm_delete_maint_{record['id']}"):
-                            delete_maintenance(record['id'])
-                            st.success("Manutenção excluída com sucesso!")
-                            st.rerun()
+            col1, col2 = st.columns(2)
+            with col2:
+                if st.button("🗑️ Excluir", key=f"delete_maint_{record['id']}"):
+                    if st.button("⚠️ Confirmar Exclusão", key=f"confirm_delete_maint_{record['id']}"):
+                        delete_maintenance(record['id'])
+                        st.success("Manutenção excluída com sucesso!")
+                        st.rerun()
     else:
         st.info("Nenhuma manutenção registrada para este veículo.")
 
