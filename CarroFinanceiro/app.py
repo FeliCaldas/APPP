@@ -2,6 +2,7 @@ import streamlit as st
 import sqlite3
 import pandas as pd
 import io
+import logging
 from database import (
     init_db, add_vehicle, get_vehicles, update_vehicle, delete_vehicle,
     add_maintenance, get_vehicle_maintenance, update_maintenance, delete_maintenance,
@@ -13,192 +14,199 @@ import base64
 from io import BytesIO
 from datetime import datetime, timedelta
 
+# Configuração do logger
+logging.basicConfig(level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s')
+
 def main():
-    # Configuração da página para mobile
-    st.set_page_config(
-        page_title="Gerenciador de Veículos",
-        layout="wide",
-        initial_sidebar_state="collapsed",
-        menu_items={
-            'About': 'Gerenciador de Veículos - Versão Mobile'
-        }
-    )
-    
-    # Configurações para melhor experiência mobile
-    st.markdown("""
-        <style>
-        [data-testid="stSidebar"][aria-expanded="true"] {
-            max-width: 80%;
-            width: 80%;
-        }
-        .streamlit-expanderHeader {
-            font-size: 1em;
-        }
-        .stButton > button {
-            width: 100%;
-            border-radius: 20px;
-            height: 3em;
-        }
-        @media (max-width: 640px) {
-            .main > div {
-                padding-left: 0.5rem;
-                padding-right: 0.5rem;
+    try:
+        # Configuração da página para mobile
+        st.set_page_config(
+            page_title="Gerenciador de Veículos",
+            layout="wide",
+            initial_sidebar_state="collapsed",
+            menu_items={
+                'About': 'Gerenciador de Veículos - Versão Mobile'
             }
-        }
-        </style>
-    """, unsafe_allow_html=True)
-    st._config.set_option('server.address', '0.0.0.0')
+        )
+        
+        # Configurações para melhor experiência mobile
+        st.markdown("""
+            <style>
+            [data-testid="stSidebar"][aria-expanded="true"] {
+                max-width: 80%;
+                width: 80%;
+            }
+            .streamlit-expanderHeader {
+                font-size: 1em;
+            }
+            .stButton > button {
+                width: 100%;
+                border-radius: 20px;
+                height: 3em;
+            }
+            @media (max-width: 640px) {
+                .main > div {
+                    padding-left: 0.5rem;
+                    padding-right: 0.5rem;
+                }
+            }
+            </style>
+        """, unsafe_allow_html=True)
+        st._config.set_option('server.address', '0.0.0.0')
 
-    # CSS para melhorar a interface mobile e tornar imagens responsivas
-    st.markdown("""
-        <style>
-        .stButton>button {
-            width: 100%;
-            height: 50px;
-            margin: 5px 0;
-        }
-        .stSelectbox {
-            margin: 10px 0;
-        }
-        .vehicle-info {
-            font-size: 18px !important;
-            line-height: 2 !important;
-            padding: 10px 0;
-        }
-        .vehicle-info p {
-            margin: 10px 0 !important;
-        }
-        .delete-button {
-            background-color: #ff4b4b !important;
-            color: white !important;
-            border: none !important;
-            padding: 0.5rem !important;
-            border-radius: 0.3rem !important;
-            cursor: pointer !important;
-        }
-        .maintenance-card {
-            background-color: var(--background-color);
-            color: var(--text-color);
-            padding: 1rem;
-            border-radius: 0.5rem;
-            margin: 0.5rem 0;
-            border: 1px solid var(--border-color);
-        }
+        # CSS para melhorar a interface mobile e tornar imagens responsivas
+        st.markdown("""
+            <style>
+            .stButton>button {
+                width: 100%;
+                height: 50px;
+                margin: 5px 0;
+            }
+            .stSelectbox {
+                margin: 10px 0;
+            }
+            .vehicle-info {
+                font-size: 18px !important;
+                line-height: 2 !important;
+                padding: 10px 0;
+            }
+            .vehicle-info p {
+                margin: 10px 0 !important;
+            }
+            .delete-button {
+                background-color: #ff4b4b !important;
+                color: white !important;
+                border: none !important;
+                padding: 0.5rem !important;
+                border-radius: 0.3rem !important;
+                cursor: pointer !important;
+            }
+            .maintenance-card {
+                background-color: var(--background-color);
+                color: var(--text-color);
+                padding: 1rem;
+                border-radius: 0.5rem;
+                margin: 0.5rem 0;
+                border: 1px solid var(--border-color);
+            }
 
-        /* Tema claro */
-        [data-theme="light"] .maintenance-card,
-        .maintenance-card {
-            --background-color: #f0f2f6;
-            --text-color: #0f1116;
-            --border-color: #e6e6e6;
-        }
+            /* Tema claro */
+            [data-theme="light"] .maintenance-card,
+            .maintenance-card {
+                --background-color: #f0f2f6;
+                --text-color: #0f1116;
+                --border-color: #e6e6e6;
+            }
 
-        /* Tema escuro */
-        [data-theme="dark"] .maintenance-card {
-            --background-color: #2d3035;
-            --text-color: #ffffff;
-            --border-color: #444444;
-        }
+            /* Tema escuro */
+            [data-theme="dark"] .maintenance-card {
+                --background-color: #2d3035;
+                --text-color: #ffffff;
+                --border-color: #444444;
+            }
 
-        /* Estilos para imagens responsivas */
-        .responsive-img {
-            max-width: 100%;
-            height: auto;
-            margin: 0 auto;
-            display: block;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        .img-container {
-            position: relative;
-            width: 100%;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 10px;
-        }
-        /* Media queries para diferentes tamanhos de tela */
-        @media (max-width: 768px) {
-            .img-container {
+            /* Estilos para imagens responsivas */
+            .responsive-img {
                 max-width: 100%;
-                padding: 5px;
+                height: auto;
+                margin: 0 auto;
+                display: block;
+                border-radius: 10px;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             }
-        }
-        /* Ajustes específicos para imagens responsivas */
-        .responsive-img {
-            max-width: 100% !important;
-            height: auto !important;
-            margin: 0 auto !important;
-            display: block !important;
-            border-radius: 10px !important;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
-        }
-        .img-container {
-            position: relative !important;
-            width: 100% !important;
-            max-width: 500px !important;  /* Reduzido de 800px para 500px */
-            margin: 0 auto !important;
-            padding: 10px !important;
-            overflow: hidden !important;
-        }
-        /* Forçar imagem a ficar dentro do container em telas pequenas */
-        @media (max-width: 768px) {
             .img-container {
+                position: relative;
+                width: 100%;
+                max-width: 800px;
+                margin: 0 auto;
+                padding: 10px;
+            }
+            /* Media queries para diferentes tamanhos de tela */
+            @media (max-width: 768px) {
+                .img-container {
+                    max-width: 100%;
+                    padding: 5px;
+                }
+            }
+            /* Ajustes específicos para imagens responsivas */
+            .responsive-img {
                 max-width: 100% !important;
-                padding: 5px !important;
+                height: auto !important;
+                margin: 0 auto !important;
+                display: block !important;
+                border-radius: 10px !important;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
             }
-        }
-        /* Estilos para a imagem dentro do container */
-        [data-testid="stImage"] > img {
-            max-height: 400px !important;  /* Altura máxima adicionada */
-            width: auto !important;
-            object-fit: contain !important;
-            margin: 0 auto !important;
-        }
-
-        /* Ajuste específico para desktop */
-        @media (min-width: 768px) {
             .img-container {
-                max-width: 400px !important;  /* Reduzido para telas maiores */
+                position: relative !important;
+                width: 100% !important;
+                max-width: 500px !important;  /* Reduzido de 800px para 500px */
+                margin: 0 auto !important;
                 padding: 10px !important;
-                margin: 1rem auto !important;
+                overflow: hidden !important;
             }
+            /* Forçar imagem a ficar dentro do container em telas pequenas */
+            @media (max-width: 768px) {
+                .img-container {
+                    max-width: 100% !important;
+                    padding: 5px !important;
+                }
+            }
+            /* Estilos para a imagem dentro do container */
             [data-testid="stImage"] > img {
-                max-height: 300px !important;  /* Altura máxima reduzida para desktop */
-                max-width: 100% !important;
+                max-height: 400px !important;  /* Altura máxima adicionada */
                 width: auto !important;
                 object-fit: contain !important;
                 margin: 0 auto !important;
             }
-        }
 
-        /* Ajuste específico para mobile (mantém as configs anteriores) */
-        @media (max-width: 767px) {
-            .img-container {
-                max-width: 100% !important;
-                padding: 5px !important;
+            /* Ajuste específico para desktop */
+            @media (min-width: 768px) {
+                .img-container {
+                    max-width: 400px !important;  /* Reduzido para telas maiores */
+                    padding: 10px !important;
+                    margin: 1rem auto !important;
+                }
+                [data-testid="stImage"] > img {
+                    max-height: 300px !important;  /* Altura máxima reduzida para desktop */
+                    max-width: 100% !important;
+                    width: auto !important;
+                    object-fit: contain !important;
+                    margin: 0 auto !important;
+                }
             }
-            [data-testid="stImage"] > img {
-                max-height: 400px !important;
-                width: auto !important;
-                object-fit: contain !important;
+
+            /* Ajuste específico para mobile (mantém as configs anteriores) */
+            @media (max-width: 767px) {
+                .img-container {
+                    max-width: 100% !important;
+                    padding: 5px !important;
+                }
+                [data-testid="stImage"] > img {
+                    max-height: 400px !important;
+                    width: auto !important;
+                    object-fit: contain !important;
+                }
             }
-        }
-        </style>
-    """, unsafe_allow_html=True)
+            </style>
+        """, unsafe_allow_html=True)
 
-    st.title("Gerenciador de Veículos")
-    init_db()
+        st.title("Gerenciador de Veículos")
+        init_db()
 
-    # Menu mais amigável para mobile
-    menu = st.selectbox(
-        "Escolha uma opção",
-        ["Adicionar Veículo", "Visualizar Veículos"]
-    )
+        # Menu mais amigável para mobile
+        menu = st.selectbox(
+            "Escolha uma opção",
+            ["Adicionar Veículo", "Visualizar Veículos"]
+        )
 
-    if menu == "Adicionar Veículo":
-        add_vehicle_form()
-    else:
-        view_vehicles()
+        if menu == "Adicionar Veículo":
+            add_vehicle_form()
+        else:
+            view_vehicles()
+    except Exception as e:
+        logging.error(f"Erro na aplicação: {e}")
+        st.error("Ocorreu um erro na aplicação. Consulte os logs para mais detalhes.")
 
 def add_maintenance_form(vehicle_id, maintenance_data=None):
     is_editing = maintenance_data is not None

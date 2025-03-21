@@ -1,13 +1,21 @@
 import requests
 import pandas as pd
+import logging
 
 BASE_URL = "https://parallelum.com.br/fipe/api/v1/carros"
 
+# Configuração do logger
+logging.basicConfig(level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s')
+
 def get_fipe_brands():
-    response = requests.get(f"{BASE_URL}/marcas")
-    if response.status_code == 200:
-        return pd.DataFrame(response.json())
-    raise Exception("Erro ao obter marcas da tabela FIPE")
+    try:
+        response = requests.get(f"{BASE_URL}/marcas")
+        if response.status_code == 200:
+            return pd.DataFrame(response.json())
+        response.raise_for_status()
+    except Exception as e:
+        logging.error(f"Erro ao obter marcas da tabela FIPE: {e}")
+        raise Exception("Erro ao obter marcas da tabela FIPE")
 
 def get_fipe_models(brand_code):
     response = requests.get(f"{BASE_URL}/marcas/{brand_code}/modelos")
