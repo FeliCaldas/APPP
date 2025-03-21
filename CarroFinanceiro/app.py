@@ -77,11 +77,29 @@ def main():
             cursor: pointer !important;
         }
         .maintenance-card {
-            background-color: #f0f2f6;
+            background-color: var(--background-color);
+            color: var(--text-color);
             padding: 1rem;
             border-radius: 0.5rem;
             margin: 0.5rem 0;
+            border: 1px solid var(--border-color);
         }
+
+        /* Tema claro */
+        [data-theme="light"] .maintenance-card,
+        .maintenance-card {
+            --background-color: #f0f2f6;
+            --text-color: #0f1116;
+            --border-color: #e6e6e6;
+        }
+
+        /* Tema escuro */
+        [data-theme="dark"] .maintenance-card {
+            --background-color: #2d3035;
+            --text-color: #ffffff;
+            --border-color: #444444;
+        }
+
         /* Estilos para imagens responsivas */
         .responsive-img {
             max-width: 100%;
@@ -274,19 +292,14 @@ def view_maintenance_history(vehicle_id):
         for record in maintenance_records:
             st.markdown("---")  # Separador entre registros
             st.markdown(f"### 📅 {record['date']} - {record['description'][:30]}...")
-            st.markdown("""
+            st.markdown(f"""
                 <div class="maintenance-card">
-                    <p><strong>Autor:</strong> {author}</p>
-                    <p><strong>Descrição:</strong> {description}</p>
-                    <p><strong>Custo:</strong> R$ {cost:.2f}</p>
-                    <p><strong>Quilometragem:</strong> {mileage} km</p>
+                    <p><strong>Autor:</strong> {record['author']}</p>
+                    <p><strong>Descrição:</strong> {record['description']}</p>
+                    <p><strong>Custo:</strong> R$ {record['cost']:.2f}</p>
+                    <p><strong>Quilometragem:</strong> {record['mileage']} km</p>
                 </div>
-            """.format(
-                author=record['author'],
-                description=record['description'],
-                cost=record['cost'],
-                mileage=record['mileage']
-            ), unsafe_allow_html=True)
+            """, unsafe_allow_html=True)
 
             col1, col2 = st.columns([3, 1])
             with col2:
