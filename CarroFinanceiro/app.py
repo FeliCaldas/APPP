@@ -157,36 +157,19 @@ def add_maintenance_form(vehicle_id, maintenance_data=None):
             value=datetime.strptime(maintenance_data['next_maintenance_date'], '%Y-%m-%d').date() if is_editing and maintenance_data['next_maintenance_date'] else (datetime.now() + timedelta(days=180)).date()
         )
 
-        # Seleção do autor
-        author_type = st.selectbox(
+        # Seleção do autor simplificada
+        author = st.selectbox(
             "Autor da Manutenção",
-            ["Antonio", "Fernando", "Outro"],
-            key=f"author_type_{vehicle_id}",
+            ["Antonio", "Fernando"],
+            key=f"author_{vehicle_id}",
             index=0 if not is_editing else (
-                ["Antonio", "Fernando", "Outro"].index("Outro")
-                if maintenance_data['author'] not in ["Antonio", "Fernando"]
-                else ["Antonio", "Fernando", "Outro"].index(maintenance_data['author'])
+                0 if maintenance_data['author'] == "Antonio" else 1
             )
         )
-
-        # Campo para outro autor
-        author = author_type
-        if author_type == "Outro":
-            other_author = st.text_input(
-                "Nome do Outro Autor",
-                value=maintenance_data['author'] if is_editing and maintenance_data['author'] not in ["Antonio", "Fernando"] else "",
-                key=f"other_author_{vehicle_id}"
-            )
-            if other_author:  # Só usa o valor do outro autor se ele for preenchido
-                author = other_author
 
         submit = st.form_submit_button("Salvar Manutenção")
 
         if submit:
-            if author_type == "Outro" and not other_author:
-                st.error("Por favor, insira o nome do outro autor.")
-                return
-
             try:
                 maintenance_info = {
                     'vehicle_id': vehicle_id,
@@ -204,7 +187,7 @@ def add_maintenance_form(vehicle_id, maintenance_data=None):
                 else:
                     add_maintenance(maintenance_info)
                     st.success("Manutenção registrada com sucesso!")
-                st.experimental_rerun()
+                st.rerun()
             except Exception as e:
                 st.error(f"Erro ao {'atualizar' if is_editing else 'registrar'} manutenção: {str(e)}")
 
